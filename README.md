@@ -1,4 +1,4 @@
-# Market News Aggregator
+# MarketWire
 
 Indian and global market headlines in one de-duplicated, sector-tagged feed — **links only**,
 every article is read on the publisher's own site. See [SPEC.md](SPEC.md) for the full spec.

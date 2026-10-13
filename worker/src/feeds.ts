@@ -26,7 +26,7 @@ const parser = new XMLParser({
 export async function fetchFeed(url: string, contactEmail: string): Promise<FeedItem[]> {
   const res = await fetch(url, {
     headers: {
-      "User-Agent": `MarketNewsAggregator/0.1 (+mailto:${contactEmail})`,
+      "User-Agent": `MarketWire/0.1 (+mailto:${contactEmail})`,
       Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
     },
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),

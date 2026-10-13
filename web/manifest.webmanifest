@@ -1,6 +1,6 @@
 {
-  "name": "Market News",
-  "short_name": "Market News",
+  "name": "MarketWire",
+  "short_name": "MarketWire",
   "description": "Indian and global market headlines in one de-duplicated, sector-tagged feed.",
   "start_url": "./#/feed",
   "scope": "./",
