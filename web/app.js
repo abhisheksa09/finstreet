@@ -254,7 +254,12 @@
     $("#myEmpty").hidden = !none;
 
     $("#followedChips").replaceChildren(...[...state.followed].sort().map(sym =>
-      el("span", { class: "chip on static", title: companyName(sym), text: sym })));
+      el("span", { class: "chip on static removable", title: companyName(sym) },
+        sym,
+        el("button", {
+          class: "chip-x", "aria-label": `Stop following ${companyName(sym)}`, text: "×",
+          onclick: () => { state.followed.delete(sym); saveFollowed(); renderMyStocks(); loadMyStocks(); },
+        }))));
 
     $("#myStoryList").replaceChildren(...withDayHeadings(state.mine.stories, s => storyItem(s, { showFollowed: true })));
     const status = $("#myStatus");
@@ -307,6 +312,15 @@
   function updatePickerCount() {
     const n = state.followed.size;
     $("#pickerDone").textContent = n ? `Done · ${n} stock${n === 1 ? "" : "s"}` : "Done";
+    $("#clearAllBtn").hidden = !n;
+  }
+
+  function clearAll() {
+    const n = state.followed.size;
+    if (!n || !confirm(`Stop following all ${n} stock${n === 1 ? "" : "s"}?`)) return;
+    state.followed.clear();
+    saveFollowed();
+    renderPicker();
   }
 
   // ── About ──────────────────────────────────────────────────────────────────
@@ -381,6 +395,7 @@
   $("#manageBtn").addEventListener("click", openPicker);
   $("#emptyPickBtn").addEventListener("click", openPicker);
   $("#pickerDone").addEventListener("click", closePicker);
+  $("#clearAllBtn").addEventListener("click", clearAll);
   $("#companySearch").addEventListener("input", renderPicker);
 
   let theme = store.get("theme", "auto");

@@ -101,6 +101,16 @@ a { color: var(--accent); }
 .toggle button.on { background: var(--accent-soft); color: var(--text); font-weight: 600; }
 
 .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+/* Touch: one swipeable row, faded at the right edge so it's clear there is more. */
+#sectorChips {
+  -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
+          mask-image: linear-gradient(to right, #000 85%, transparent);
+  padding-right: 32px;
+}
+/* Mouse/trackpad: a sideways-only row can't be scrolled with a wheel, so wrap instead. */
+@media (hover: hover) and (pointer: fine) {
+  #sectorChips { flex-wrap: wrap; overflow: visible; -webkit-mask-image: none; mask-image: none; padding-right: 0; }
+}
 .chip {
   flex: none; border: 1px solid var(--border); background: var(--surface); color: var(--text);
   border-radius: 999px; padding: 5px 12px; font-size: 13px; cursor: pointer; white-space: nowrap;
@@ -152,6 +162,13 @@ a { color: var(--accent); }
 .empty .primary-btn { max-width: 260px; margin: 16px auto 0; }
 .followed { margin: 8px 0 4px; flex-wrap: wrap; overflow: visible; }
 .chip.static { cursor: default; font-size: 12px; padding: 3px 10px; }
+.chip.removable { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px; }
+.chip-x {
+  border: 0; background: rgba(0, 0, 0, 0.18); color: inherit; cursor: pointer;
+  width: 18px; height: 18px; border-radius: 50%; font-size: 12px; line-height: 18px; padding: 0;
+}
+.chip-x:hover { background: rgba(0, 0, 0, 0.32); }
+.picker-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .story-stocks { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
 .stock-tag {
   background: var(--accent-soft); color: var(--text); border-radius: 6px;

@@ -61,7 +61,10 @@
     </div>
 
     <section id="pickerPanel" class="picker" hidden>
-      <p class="muted">Pick the Nifty 100 stocks you own or follow. Saved on this device only.</p>
+      <div class="picker-head">
+        <p class="muted">Pick the Nifty 100 stocks you own or follow. Saved on this device only.</p>
+        <button id="clearAllBtn" class="link-btn" hidden>Clear all</button>
+      </div>
       <input id="companySearch" type="search" placeholder="Search by name or symbol" autocomplete="off">
       <ul id="companyList" class="companies"></ul>
       <button id="pickerDone" class="primary-btn">Done</button>
