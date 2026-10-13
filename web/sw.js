@@ -1,10 +1,10 @@
 // Service worker: network-first for everything (so a deploy shows up on the next load),
 // falling back to the cached copy when offline.
-const SHELL_CACHE = "shell-v2";
+const SHELL_CACHE = "shell-v3";
 const API_CACHE = "api-v1";
 const SHELL = [
   "./", "./index.html", "./styles.css", "./app.js", "./config.js",
-  "./manifest.webmanifest", "./icons/icon.svg",
+  "./manifest.webmanifest", "./icons/icon.svg", "./icons/icon-192.png",
 ];
 
 self.addEventListener("install", event => {

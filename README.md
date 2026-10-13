@@ -75,6 +75,8 @@ Note: the free Workers plan allows 5 cron triggers per account.
 | Endpoint | Description |
 | --- | --- |
 | `GET /api/feed?region=india\|global[&sector=…][&before=…][&limit=…]` | Stories newest first, each with all outlet links |
+| `GET /api/feed?companies=INFY,TCS,…` | Stories naming any of these NSE symbols (both regions) — powers My Stocks |
+| `GET /api/counts[?sector=…]` | Headline count per region (tab badges) |
 | `GET /api/sources` | Enabled sources (About screen) |
 | `GET /api/meta` | Sector names, watchlist companies, last collector run |
 
@@ -83,12 +85,13 @@ Note: the free Workers plan allows 5 cron triggers per account.
 - **Sources** — `worker/seed.sql`; disable one live with
   `UPDATE sources SET enabled = 0 WHERE id = '…'`
 - **Sector keywords** — `worker/src/sectors.json`
-- **Watchlist companies** — `worker/src/companies.json` (starter list; extend to Nifty 100).
-  Prefer multi-word aliases: short ones like "ITC" or "Titan" match unrelated headlines.
+- **Companies (My Stocks)** — `worker/src/companies.json`: the Nifty 100 with aliases. After editing it
+  (or `sectors.json`), bump `TAGGING_VERSION` in `worker/src/tagging.ts` so stored headlines are re-tagged.
 - **Same-story threshold** — `SAME_STORY_THRESHOLD` in `worker/src/dedupe.ts` (default 0.6)
 
 ## Before the Play Store
 
-- Replace `web/icons/icon.svg` with PNG icons (192×192 and 512×512, plus a maskable version)
+- App icons are ready: `web/icons/icon-192.png`, `icon-512.png`, `icon-maskable-512.png` (rendered from `icon.svg`);
+  `web/icons/logo.svg` is the horizontal logo with tagline for the store listing
 - Wrap the PWA as a Trusted Web Activity with [Bubblewrap](https://github.com/GoogleChromeLabs/bubblewrap)
 - Work through the content-rules checklist in SPEC.md §9

@@ -5,6 +5,8 @@ import { COMPANIES, SECTORS } from "./tagging";
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
 const REGIONS = new Set(["india", "global"]);
+const SYMBOLS = new Set(COMPANIES.map(c => c.symbol));
+const MAX_COMPANIES = 100;
 
 interface StoryRow {
   id: string;
@@ -42,9 +44,22 @@ export async function handleApi(req: Request, env: Env): Promise<Response> {
   }
 }
 
+/**
+ * Stories newest first. Either `region` (india|global) or `companies` (comma-separated NSE
+ * symbols, both regions) is required; `sector`, `before` and `limit` are optional.
+ */
 async function feed(url: URL, env: Env): Promise<Response> {
-  const region = url.searchParams.get("region") ?? "";
-  if (!REGIONS.has(region)) return json({ error: "region must be 'india' or 'global'" }, 400, env);
+  const region = url.searchParams.get("region");
+  if (region && !REGIONS.has(region)) return json({ error: "region must be 'india' or 'global'" }, 400, env);
+
+  const companiesParam = url.searchParams.get("companies");
+  const companies = companiesParam
+    ? [...new Set(companiesParam.split(",").map(s => s.trim().toUpperCase()).filter(Boolean))]
+    : null;
+  if (companies && (!companies.length || companies.length > MAX_COMPANIES || companies.some(s => !SYMBOLS.has(s)))) {
+    return json({ error: "companies must be up to 100 known NSE symbols" }, 400, env);
+  }
+  if (!region && !companies) return json({ error: "region or companies is required" }, 400, env);
 
   const sector = url.searchParams.get("sector");
   if (sector && !SECTORS.includes(sector)) return json({ error: "unknown sector" }, 400, env);
@@ -54,11 +69,13 @@ async function feed(url: URL, env: Env): Promise<Response> {
 
   const stories = (await env.DB
     .prepare(`SELECT id, title, region, sectors, companies, first_seen_at FROM stories
-              WHERE region = ?1 AND first_seen_at < ?2
+              WHERE (?1 IS NULL OR region = ?1) AND first_seen_at < ?2
                 AND (?3 IS NULL OR EXISTS (SELECT 1 FROM json_each(stories.sectors) WHERE value = ?3))
+                AND (?5 IS NULL OR EXISTS (SELECT 1 FROM json_each(stories.companies)
+                                           WHERE value IN (SELECT value FROM json_each(?5))))
               ORDER BY first_seen_at DESC, id
               LIMIT ?4`)
-    .bind(region, before, sector, limit)
+    .bind(region, before, sector, limit, companies ? JSON.stringify(companies) : null)
     .all<StoryRow>()).results;
 
   const links = stories.length
@@ -92,21 +109,23 @@ async function feed(url: URL, env: Env): Promise<Response> {
         published_at: l.published_at,
       })),
     })),
-    // Ties on first_seen_at at a page boundary can be skipped; fine for a 48 h news feed.
+    // Ties on first_seen_at at a page boundary can be skipped; fine for a news feed.
     next_before: stories.length === limit ? stories[stories.length - 1].first_seen_at : null,
   }, 200, env);
 }
 
-/** Stories per region (last 48 h), optionally for one sector — powers the tab badges. */
+/** Stories per region in the last 24 h, optionally for one sector — powers the tab badges. */
 async function counts(url: URL, env: Env): Promise<Response> {
   const sector = url.searchParams.get("sector");
   if (sector && !SECTORS.includes(sector)) return json({ error: "unknown sector" }, 400, env);
 
+  const since = Math.floor(Date.now() / 1000) - 86400;
   const rows = (await env.DB
     .prepare(`SELECT region, COUNT(*) AS n FROM stories
-              WHERE ?1 IS NULL OR EXISTS (SELECT 1 FROM json_each(stories.sectors) WHERE value = ?1)
+              WHERE first_seen_at >= ?2
+                AND (?1 IS NULL OR EXISTS (SELECT 1 FROM json_each(stories.sectors) WHERE value = ?1))
               GROUP BY region`)
-    .bind(sector)
+    .bind(sector, since)
     .all<{ region: string; n: number }>()).results;
 
   const result: Record<string, number> = { india: 0, global: 0 };
@@ -128,7 +147,7 @@ async function meta(env: Env): Promise<Response> {
     .first<{ value: string }>();
   return json({
     sectors: SECTORS,
-    companies: COMPANIES.map(c => ({ symbol: c.symbol, name: c.name })),
+    companies: COMPANIES.map(c => ({ symbol: c.symbol, name: c.name, industry: c.industry })),
     last_run_at: lastRun ? Number(lastRun.value) : null,
   }, 200, env);
 }

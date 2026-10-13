@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS stories (
   first_seen_at INTEGER NOT NULL               -- unix seconds; drives feed ordering
 );
 CREATE INDEX IF NOT EXISTS idx_stories_region_time ON stories(region, first_seen_at DESC);
+-- Time-only index for queries across both regions (My Stocks, 24 h tab counts, retention pruning).
+CREATE INDEX IF NOT EXISTS idx_stories_time ON stories(first_seen_at DESC);
 
 CREATE TABLE IF NOT EXISTS links (
   story_id     TEXT NOT NULL REFERENCES stories(id) ON DELETE CASCADE,

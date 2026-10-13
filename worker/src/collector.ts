@@ -1,11 +1,11 @@
 // Scheduled collector: fetch every enabled feed, group copies of the same story,
-// tag, store, and prune anything older than 48 hours (SPEC §7).
+// tag, store, and prune anything older than the retention window (SPEC §7).
 import type { Env } from "./index";
 import { fetchFeed, type FeedItem } from "./feeds";
 import { findSameStory, storyId, titleTokens, type Candidate } from "./dedupe";
-import { tagCompanies, tagSectors } from "./tagging";
+import { TAGGING_VERSION, tagCompanies, tagSectors } from "./tagging";
 
-const RETENTION_S = 48 * 3600;     // keep 48 h of headlines
+const RETENTION_S = 90 * 86400;    // keep 90 days of headlines (about 0.5 KB each)
 const MATCH_WINDOW_S = 36 * 3600;  // look this far back for "same story" matches
 const FAIL_ALERT_AFTER = 3;        // consecutive failures before a source is flagged
 const BATCH_SIZE = 100;            // statements per D1 batch
@@ -24,7 +24,30 @@ export interface RunSummary {
   newLinks: number;
 }
 
+/** Re-tag every stored headline once after sectors.json / companies.json change. */
+async function retagIfNeeded(env: Env): Promise<void> {
+  const current = await env.DB
+    .prepare("SELECT value FROM meta WHERE key = 'tagging_version'")
+    .first<{ value: string }>();
+  if (current?.value === TAGGING_VERSION) return;
+
+  const stories = (await env.DB.prepare("SELECT id, title FROM stories").all<{ id: string; title: string }>()).results;
+  const stmts = stories.map(s => env.DB
+    .prepare("UPDATE stories SET sectors = ?, companies = ? WHERE id = ?")
+    .bind(JSON.stringify(tagSectors(s.title)), JSON.stringify(tagCompanies(s.title)), s.id));
+  stmts.push(env.DB
+    .prepare(`INSERT INTO meta (key, value) VALUES ('tagging_version', ?)
+              ON CONFLICT(key) DO UPDATE SET value = excluded.value`)
+    .bind(TAGGING_VERSION));
+  for (let i = 0; i < stmts.length; i += BATCH_SIZE) {
+    await env.DB.batch(stmts.slice(i, i + BATCH_SIZE));
+  }
+  console.log(JSON.stringify({ event: "retagged", stories: stories.length, version: TAGGING_VERSION }));
+}
+
 export async function runCollector(env: Env): Promise<RunSummary> {
+  await retagIfNeeded(env);
+
   const now = Math.floor(Date.now() / 1000);
   const cutoff = now - RETENTION_S;
 
@@ -34,10 +57,17 @@ export async function runCollector(env: Env): Promise<RunSummary> {
 
   const fetched = await Promise.allSettled(sources.map(s => fetchFeed(s.feed_url, env.CONTACT_EMAIL)));
 
-  // Current state: every stored URL, and recent stories to match new headlines against.
-  const knownUrls = new Set(
-    (await env.DB.prepare("SELECT url FROM links").all<{ url: string }>()).results.map(r => r.url),
-  );
+  // Which of the URLs we just fetched are already stored. Looked up by URL (indexed) rather than
+  // reading every stored link: with 90 days kept, a full scan every 15 min would eat D1's daily read quota.
+  const fetchedUrls = fetched.flatMap(r => (r.status === "fulfilled" ? r.value.map(i => i.url) : []));
+  const knownUrls = new Set(fetchedUrls.length
+    ? (await env.DB
+        .prepare("SELECT url FROM links WHERE url IN (SELECT value FROM json_each(?))")
+        .bind(JSON.stringify(fetchedUrls))
+        .all<{ url: string }>()).results.map(r => r.url)
+    : []);
+
+  // Recent stories to match new headlines against.
   const recent = (await env.DB
     .prepare("SELECT id, title, region FROM stories WHERE first_seen_at >= ?")
     .bind(now - MATCH_WINDOW_S)

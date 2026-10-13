@@ -51,7 +51,7 @@ Differentiators to prove in testing:
 
 | Feature | Release | Notes |
 | --- | --- | --- |
-| India / Global feed tabs | v1 | Newest first, last 48 hours |
+| India / Global feed tabs | v1 | Newest first, date headings, Jump to date; 90 days kept |
 | Duplicate removal | v1 | Same link or near-identical title shown once, with "+N sources" |
 | Sector filter chips | v1 | 15 sectors + Broad Market, tagged from headlines (§7.3) |
 | Watchlist filter | v1 | Stored on the phone only; matches company names in headlines |
@@ -59,7 +59,7 @@ Differentiators to prove in testing:
 | Sources / About screen | v1 | Every publisher, privacy policy, contact; required for Play |
 | Push alert when a watchlist stock is in the news | v1.1 | Needs FCM + server-side watchlist |
 | Saved / bookmarked headlines | v1.1 | Local only |
-| Search | v1.1 | Headline text, last 48 hours |
+| Search | v1.1 | Headline text, last 90 days |
 | Daily AI morning brief | Later | Generated once a day for all users; themes only, no stock calls |
 | Accounts and cross-device sync | Later | Only if users ask |
 | More sources and languages (Hindi) | Later | After checking each publisher's terms |
@@ -89,7 +89,7 @@ Tapping "+N sources" expands the row to list each outlet's link for that story.
 ```
 
 - **One Cloudflare Worker** with two entry points:
-  - `scheduled()` — cron `*/15 * * * *`: fetch feeds → parse → dedupe → tag → upsert into D1 → prune > 48 h
+  - `scheduled()` — cron `*/15 * * * *`: fetch feeds → parse → dedupe → tag → upsert into D1 → prune > 90 days
   - `fetch()` — read-only JSON API for the app (§8)
 - **Cloudflare D1** for storage (§6)
 - **PWA** hosted on Cloudflare Pages (or GitHub Pages), installable to home screen
@@ -134,7 +134,7 @@ CREATE TABLE links (
 
 A small `meta(key, value)` table holds run metadata such as `last_run_at` (see `worker/schema.sql`).
 
-Retention: delete stories whose `first_seen_at` is older than 48 h at the end of each run.
+Retention: delete stories whose `first_seen_at` is older than 90 days at the end of each run.
 The watchlist is **not** stored server-side in v1.
 
 ---
@@ -171,7 +171,7 @@ Known feed issues (verified 2026-10-13):
    starting an entity (`&(?!#\d+;|#x[0-9a-fA-F]+;|[A-Za-z][A-Za-z0-9]*;)`) with `&amp;`.
    Workers have no `DOMParser` → use `fast-xml-parser`. Handle RSS 2.0 `<item>` and Atom `<entry>`.
 3. Per item keep only: `title` (HTML-unescaped, whitespace-collapsed), `link`, `pubDate`/`updated`.
-   **Discard `description`.** Drop items without title or link, or older than 48 h.
+   **Discard `description`.** Drop items without title or link, or older than 90 days.
 4. On success set `last_ok_at = now`, `fail_count = 0`; on failure `fail_count += 1`
    and log. A response that isn't XML (e.g. HTML) counts as a failure.
 5. Dedupe:
@@ -330,7 +330,7 @@ Open questions:
 - [ ] Cron runs every 15 min; each run logs per-source item counts and failures
 - [ ] No stored row contains RSS description text
 - [ ] The same story from two outlets appears once with both links
-- [ ] `/api/feed?region=india` returns ≤ 48 h of stories, newest first, in < 300 ms (p95)
+- [ ] `/api/feed?region=india` returns ≤ 90 days of stories, newest first, in < 300 ms (p95)
 - [ ] Sector chip filters and My stocks filter work offline from the last cached feed
 - [ ] Tapping a headline opens the publisher URL outside the app
 - [ ] About screen lists every enabled source with a link, privacy policy and contact

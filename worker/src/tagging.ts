@@ -5,9 +5,16 @@ import companyList from "./companies.json";
 export const BROAD_MARKET = "Broad Market";
 const MAX_SECTORS = 2;
 
+/**
+ * Bump whenever sectors.json or companies.json changes: the next collector run
+ * re-tags every stored headline with the new lists (see collector.ts).
+ */
+export const TAGGING_VERSION = "2026-10-13.nifty100";
+
 export interface Company {
   symbol: string;
   name: string;
+  industry: string;
   aliases: string[];
 }
 
