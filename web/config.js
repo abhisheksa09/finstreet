@@ -1,9 +1,13 @@
-// Deployed: the Worker serves this app and the API from the same origin, so apiBase is "".
-// Local dev: the app is served separately (python -m http.server 5173) and the API by
-// `npm run dev` in worker/ — set the port to the one wrangler prints ("Ready on …").
-const isLocalStaticServer = location.port === "5173";
+// Where the app finds the API:
+//   finstreet.pages.dev (production) → the finstreet Worker
+//   *.workers.dev (Worker serving the app itself) → same origin
+//   local static server on :5173 → local `npm run dev` in worker/ (use the port wrangler prints)
+const WORKER_API = "https://finstreet.nse-scanner.workers.dev";
+const host = location.hostname;
 
 window.APP_CONFIG = {
-  apiBase: isLocalStaticServer ? "http://127.0.0.1:8788" : "",
+  apiBase: location.port === "5173" ? "http://127.0.0.1:8788"
+         : host.endsWith(".workers.dev") ? ""
+         : WORKER_API,
   contactEmail: "you@example.com",
 };

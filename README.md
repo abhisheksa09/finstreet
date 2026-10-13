@@ -45,14 +45,24 @@ npm test            # tagging, duplicate detection, feed parsing
 npm run typecheck
 ```
 
+## Live
+
+- App: **https://finstreet.pages.dev** (Cloudflare Pages)
+- API + collector: https://finstreet.nse-scanner.workers.dev (Worker `finstreet`, cron every 15 min)
+
 ## Deploy
 
-1. `cd worker && npx wrangler login`
-2. `npx wrangler d1 create market-news` → paste the `database_id` into `wrangler.toml`
-3. Set `CONTACT_EMAIL` and `ALLOWED_ORIGIN` (the PWA's URL) in `wrangler.toml`
-4. `npm run db:init:remote`
-5. `npm run deploy` — **use `wrangler deploy`**; cron triggers are not registered by `wrangler versions upload`
-6. Set `apiBase` in `web/config.js` to the Worker URL, then deploy `web/` to Cloudflare Pages or GitHub Pages
+```bash
+cd worker
+npm run deploy        # backend Worker: API + 15-min collector (cron registers only via `wrangler deploy`)
+npm run deploy:web    # app (web/) to Cloudflare Pages -> finstreet.pages.dev
+```
+
+First-time setup on a new account: `npx wrangler login`, `npx wrangler d1 create market-news`
+(paste the id into `wrangler.toml`), `npm run db:init:remote`, then the two deploys above.
+`web/config.js` decides which API the app calls (Pages -> Worker URL; local :5173 -> local dev).
+
+Note: the free Workers plan allows 5 cron triggers per account.
 
 ## API
 
