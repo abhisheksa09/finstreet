@@ -1,0 +1,50 @@
+# On every push to main: run the tests, then deploy
+#   1. the backend Worker (API + 15-min collector)  -> finstreet.nse-scanner.workers.dev
+#   2. the app (web/) to Cloudflare Pages            -> finstreet.pages.dev
+#
+# Needs one repository secret: CLOUDFLARE_API_TOKEN
+# (Cloudflare dashboard -> My Profile -> API Tokens -> "Edit Cloudflare Workers" template,
+#  make sure it includes "Cloudflare Pages: Edit").
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: 22393bf2b4734eed012f88a6ed0c24f1
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: worker/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: |
+          npm test
+          npm run typecheck
+
+      - name: Deploy Worker (API + collector)
+        # `wrangler deploy` (not `versions upload`) so the cron schedule stays registered
+        run: npx wrangler deploy
+
+      - name: Deploy app to Pages
+        run: npx wrangler pages deploy ../web --project-name finstreet --branch main --commit-dirty=true

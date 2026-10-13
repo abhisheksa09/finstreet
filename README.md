@@ -52,6 +52,12 @@ npm run typecheck
 
 ## Deploy
 
+**Automatic:** every push to `main` runs `.github/workflows/deploy.yml` — tests, then deploys
+the Worker and the Pages app. Requires the `CLOUDFLARE_API_TOKEN` repository secret.
+You can also run it by hand from GitHub → Actions → Deploy → Run workflow.
+
+**Manual** (same result, from your machine):
+
 ```bash
 cd worker
 npm run deploy        # backend Worker: API + 15-min collector (cron registers only via `wrangler deploy`)
