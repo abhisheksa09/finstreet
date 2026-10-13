@@ -1,0 +1,17 @@
+{
+  "Banking & Finance": ["bank", "banks", "banking", "lender", "lenders", "nbfc", "loan", "loans", "credit", "deposit", "deposits", "insurance", "insurer", "fintech", "mutual fund", "mutual funds", "hdfc", "icici", "sbi", "kotak", "axis bank", "bajaj finance", "shriram finance", "upi", "npci", "payments", "paytm", "mobikwik", "pine labs", "broking", "brokerage", "gilts", "amc", "sebi", "mf", "jpmorgan", "goldman", "morgan stanley", "citigroup", "wells fargo", "bank of america"],
+  "IT & Tech": ["tech", "technology", "software", "it services", "ai", "artificial intelligence", "semiconductor", "semiconductors", "chip", "chips", "chipmaker", "cloud", "data centre", "data center", "infosys", "tcs", "wipro", "hcl", "tech mahindra", "ltimindtree", "nvidia", "microsoft", "apple", "google", "alphabet", "meta", "amazon", "openai", "tsmc"],
+  "Energy & Oil": ["energy", "oil", "crude", "brent", "opec", "gas", "lng", "petrol", "diesel", "fuel", "refinery", "refiner", "power", "electricity", "renewable", "solar", "coal", "ongc", "reliance", "adani green", "ntpc", "tata power", "exxon", "chevron", "bp", "shell"],
+  "Industrials & Cap Goods": ["capital goods", "industrial", "industrials", "engineering", "engines", "machinery", "cable", "cables", "wire", "polycab", "kei", "siemens", "abb", "bhel", "cummins", "transmission", "electricals", "manufacturing", "boeing"],
+  "Agri & Chemicals": ["agri", "agriculture", "agrochemical", "farm", "farmers", "fertiliser", "fertilizer", "crop", "crops", "monsoon", "sugar", "kharif", "rabi", "chemical", "chemicals", "upl", "bayer", "pi industries"],
+  "Auto": ["auto", "autos", "automaker", "carmaker", "car", "cars", "ev", "evs", "electric vehicle", "two-wheeler", "tata motors", "maruti", "mahindra", "hero motocorp", "bajaj auto", "tesla", "toyota", "ford", "general motors"],
+  "Pharma & Healthcare": ["pharma", "pharmaceutical", "drug", "drugs", "drugmaker", "healthcare", "hospital", "hospitals", "vaccine", "medical", "biotech", "fda", "sun pharma", "cipla", "dr reddy", "lupin", "j&j", "johnson & johnson", "pfizer", "eli lilly"],
+  "Metals & Mining": ["metal", "metals", "steel", "aluminium", "aluminum", "copper", "zinc", "iron ore", "mining", "miner", "tata steel", "jsw steel", "hindalco", "vedanta"],
+  "Commodities & Gold": ["gold", "silver", "commodity", "commodities", "bullion", "precious metals"],
+  "FMCG & Consumer": ["fmcg", "consumer", "retail", "retailer", "e-commerce", "ecommerce", "food", "beverage", "hindustan unilever", "hul", "itc", "nestle", "dabur", "titan", "dmart", "walmart", "flipkart"],
+  "Telecom & Media": ["telecom", "5g", "airtel", "bharti", "jio", "vodafone idea", "media", "streaming", "netflix"],
+  "Real Estate & Infra": ["real estate", "realty", "housing", "property", "infrastructure", "infra", "construction", "cement", "railway", "railways", "dlf", "larsen", "l&t", "ultratech", "adani ports", "logistics", "gatishakti"],
+  "Defence": ["defence", "defense", "hal", "bel", "bharat electronics", "missile"],
+  "Crypto": ["crypto", "bitcoin", "ethereum", "cryptocurrency", "stablecoin", "blockchain"],
+  "Economy & Policy": ["rbi", "fed", "federal reserve", "ecb", "rate cut", "rate hike", "interest rate", "interest rates", "inflation", "cpi", "gdp", "growth", "recession", "rupee", "dollar", "yield", "yields", "bond", "bonds", "tariff", "tariffs", "trade deal", "budget", "fiscal", "imf", "debt", "economy", "economic", "jobs", "unemployment", "fx", "forex"]
+}

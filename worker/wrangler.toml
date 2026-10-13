@@ -1,0 +1,27 @@
+name = "market-news-aggregator"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+# Collector runs every 15 minutes.
+# NOTE: cron triggers only register via `wrangler deploy`, not `wrangler versions upload`.
+[triggers]
+crons = ["*/15 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "market-news"
+database_id = "b813d177-01a1-40b7-b31a-514fea3a910a"
+
+# The PWA in ../web is served by this same Worker: files are served as static assets,
+# anything else (e.g. /api/*) falls through to the Worker's fetch handler.
+[assets]
+directory = "../web"
+
+[vars]
+# Sent in the User-Agent so publishers can reach you (SPEC §9).
+CONTACT_EMAIL = "you@example.com"
+# Origin of the PWA allowed to call the API. "*" is fine for local dev.
+ALLOWED_ORIGIN = "*"
+
+[observability]
+enabled = true

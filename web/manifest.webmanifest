@@ -1,0 +1,13 @@
+{
+  "name": "Market News",
+  "short_name": "Market News",
+  "description": "Indian and global market headlines in one de-duplicated, sector-tagged feed.",
+  "start_url": "./#/feed",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f7f8",
+  "theme_color": "#0f766e",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
