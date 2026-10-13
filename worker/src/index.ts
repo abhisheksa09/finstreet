@@ -1,4 +1,4 @@
-// MarketWire — Cloudflare Worker entry point.
+// FinStreet — Cloudflare Worker entry point.
 //   scheduled(): collector, every 15 minutes (wrangler.toml [triggers])
 //   fetch():     read-only JSON API for the app under /api/*
 import { handleApi } from "./api";

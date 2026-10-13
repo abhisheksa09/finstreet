@@ -1,4 +1,4 @@
-// MarketWire PWA — vanilla JS, no build step.
+// FinStreet PWA — vanilla JS, no build step.
 // All feed text is rendered with textContent (never innerHTML): headlines come from third parties.
 (() => {
   "use strict";
@@ -201,7 +201,7 @@
   // ── About ──────────────────────────────────────────────────────────────────
   async function renderAbout() {
     const contact = window.APP_CONFIG.contactEmail;
-    $("#contactLink").href = `mailto:${contact}?subject=${encodeURIComponent("MarketWire feedback")}`;
+    $("#contactLink").href = `mailto:${contact}?subject=${encodeURIComponent("FinStreet feedback")}`;
     $("#lastRun").textContent = state.meta?.last_run_at
       ? `Headlines last collected ${timeAgo(state.meta.last_run_at)}.` : "";
     try {

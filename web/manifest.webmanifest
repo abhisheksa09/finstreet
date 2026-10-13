@@ -1,6 +1,6 @@
 {
-  "name": "MarketWire",
-  "short_name": "MarketWire",
+  "name": "FinStreet",
+  "short_name": "FinStreet",
   "description": "Indian and global market headlines in one de-duplicated, sector-tagged feed.",
   "start_url": "./#/feed",
   "scope": "./",

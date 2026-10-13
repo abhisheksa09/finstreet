@@ -1,4 +1,4 @@
-# MarketWire — Spec
+# FinStreet — Spec
 
 > Status: v1 spec · 2026-10-13
 > Source plan: "Market News Aggregator — Project Plan" (Claude Docs)
@@ -165,7 +165,7 @@ Known feed issues (verified 2026-10-13):
 ### 7.2 Fetch, parse, dedupe
 
 1. Fetch every enabled feed in parallel. Headers:
-   `User-Agent: MarketWire/1.0 (+<contact email>)`,
+   `User-Agent: FinStreet/1.0 (+<contact email>)`,
    `Accept: application/rss+xml, application/xml, text/xml, */*`. Timeout 15 s.
 2. Sanitise before parsing: decode as UTF-8 with replacement; replace bare `&` not
    starting an entity (`&(?!#\d+;|#x[0-9a-fA-F]+;|[A-Za-z][A-Za-z0-9]*;)`) with `&amp;`.
