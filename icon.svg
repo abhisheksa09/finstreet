@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="FinStreet">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d4f4a"/>
+      <stop offset="1" stop-color="#062b29"/>
+    </linearGradient>
+    <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f766e" stop-opacity="0"/>
+      <stop offset="1" stop-color="#14b8a6" stop-opacity="0.55"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Tile -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- Road vanishing toward the horizon: the "Street" -->
+  <path d="M96 512 L236 330 L276 330 L416 512 Z" fill="url(#road)"/>
+  <g fill="#fbbf24">
+    <rect x="251" y="352" width="10" height="22" rx="3"/>
+    <rect x="249" y="394" width="14" height="30" rx="4"/>
+    <rect x="246" y="446" width="20" height="44" rx="5"/>
+  </g>
+
+  <!-- Signpost shaped like an "F": the "Fin" -->
+  <g fill="#ffffff">
+    <!-- pole -->
+    <rect x="150" y="104" width="44" height="300" rx="10"/>
+    <!-- top sign (long), pointing right -->
+    <path d="M150 112 H346 L384 150 L346 188 H150 Z"/>
+    <!-- middle sign (shorter), pointing right -->
+    <path d="M150 222 H292 L324 252 L292 282 H150 Z"/>
+    <!-- base plate -->
+    <rect x="128" y="398" width="88" height="18" rx="9"/>
+  </g>
+
+  <!-- Rising market arrow on the top sign -->
+  <path d="M182 170 L232 140 L262 156 L322 120" fill="none" stroke="#0d4f4a" stroke-width="14"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Gold up-tick breaking out above the sign -->
+  <path d="M352 96 L404 64" fill="none" stroke="#fbbf24" stroke-width="16" stroke-linecap="round"/>
+  <path d="M376 54 L414 58 L404 94 Z" fill="#fbbf24"/>
+</svg>
