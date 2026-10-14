@@ -40,11 +40,14 @@
       <button class="tab" role="tab" data-region="global">Global <span class="count" data-count="global" title="Headlines in the last 24 hours"></span></button>
     </div>
     <div class="filters">
-      <div id="sectorChips" class="chips" aria-label="Sector filter"></div>
-      <div class="date-jump">
+      <div class="filter-field">
+        <label for="sectorSelect">Sector</label>
+        <select id="sectorSelect"><option value="">All sectors</option></select>
+      </div>
+      <div class="filter-field date-jump">
         <label for="jumpDate">Jump to date</label>
         <input id="jumpDate" type="date">
-        <button id="backToLatest" class="link-btn" hidden>Back to latest</button>
+        <button id="backToLatest" class="latest-btn" title="Clear the date and show the newest headlines">Latest</button>
       </div>
     </div>
     <p id="pullHint" class="pull-hint" hidden>Release to refresh</p>

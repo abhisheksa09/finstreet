@@ -204,7 +204,6 @@
       state.jumpBefore = input.value
         ? Math.floor(Date.parse(`${input.value}T23:59:59+05:30`) / 1000) + 1
         : null;
-      $("#backToLatest").hidden = !state.jumpBefore;
       window.scrollTo(0, 0);
       loadFeed();
     });
@@ -217,8 +216,7 @@
   function renderFeed() {
     document.querySelectorAll(".tab").forEach(t =>
       t.setAttribute("aria-selected", String(t.dataset.region === state.region)));
-    document.querySelectorAll("#sectorChips .chip").forEach(c =>
-      c.classList.toggle("on", (c.dataset.sector || null) === state.sector));
+    $("#sectorSelect").value = state.sector ?? "";
 
     $("#storyList").replaceChildren(...withDayHeadings(state.feed.stories, s => storyItem(s)));
     const status = $("#feedStatus");
@@ -228,10 +226,11 @@
     $("#loadMore").hidden = !state.feed.nextBefore;
   }
 
-  function renderSectorChips() {
-    const chips = [el("button", { class: "chip", "data-sector": "", text: "All sectors" })]
-      .concat((state.meta?.sectors ?? []).map(s => el("button", { class: "chip", "data-sector": s, text: s })));
-    $("#sectorChips").replaceChildren(...chips);
+  function renderSectorOptions() {
+    const options = [el("option", { value: "", text: "All sectors" })]
+      .concat((state.meta?.sectors ?? []).map(s => el("option", { value: s, text: s })));
+    $("#sectorSelect").replaceChildren(...options);
+    $("#sectorSelect").value = state.sector ?? "";
   }
 
   // ── My Stocks tab ──────────────────────────────────────────────────────────
@@ -383,10 +382,8 @@
     store.set("region", state.region);
     loadFeed();
   }));
-  $("#sectorChips").addEventListener("click", e => {
-    const chip = e.target.closest(".chip");
-    if (!chip) return;
-    state.sector = chip.dataset.sector || null;
+  $("#sectorSelect").addEventListener("change", e => {
+    state.sector = e.target.value || null;
     loadFeed();
   });
   $("#loadMore").addEventListener("click", () => loadFeed({ append: true }));
@@ -421,7 +418,7 @@
       state.followed = new Set([...state.followed].filter(s => known.has(s)));
       if (state.followed.size !== before) saveFollowed();
     }
-    renderSectorChips();
+    renderSectorOptions();
     route();
     loadFeed();
   })();

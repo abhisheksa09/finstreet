@@ -95,22 +95,12 @@ a { color: var(--accent); }
 .count:empty { display: none; }
 .tab[aria-selected="true"] .count { background: rgba(255, 255, 255, 0.25); color: #fff; }
 
-.filters { display: grid; gap: 8px; }
+.filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
 .toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; width: max-content; }
 .toggle button { border: 0; background: var(--surface); color: var(--text); padding: 6px 14px; cursor: pointer; }
 .toggle button.on { background: var(--accent-soft); color: var(--text); font-weight: 600; }
 
 .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
-/* Touch: one swipeable row, faded at the right edge so it's clear there is more. */
-#sectorChips {
-  -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
-          mask-image: linear-gradient(to right, #000 85%, transparent);
-  padding-right: 32px;
-}
-/* Mouse/trackpad: a sideways-only row can't be scrolled with a wheel, so wrap instead. */
-@media (hover: hover) and (pointer: fine) {
-  #sectorChips { flex-wrap: wrap; overflow: visible; -webkit-mask-image: none; mask-image: none; padding-right: 0; }
-}
 .chip {
   flex: none; border: 1px solid var(--border); background: var(--surface); color: var(--text);
   border-radius: 999px; padding: 5px 12px; font-size: 13px; cursor: pointer; white-space: nowrap;
@@ -139,11 +129,17 @@ a { color: var(--accent); }
   font-size: 12.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px;
 }
 .stories > .day-head:first-child { margin-top: 4px; }
-.date-jump { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
-.date-jump input {
+.filter-field { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.filter-field input, .filter-field select {
   border: 1px solid var(--border); background: var(--surface); color: var(--text);
   border-radius: 8px; padding: 4px 8px; font: inherit;
 }
+.filter-field select { cursor: pointer; max-width: 60vw; }
+.latest-btn {
+  border: 1px solid var(--accent); background: transparent; color: var(--accent);
+  border-radius: 8px; padding: 4px 10px; font: inherit; font-weight: 600; cursor: pointer;
+}
+.latest-btn:hover { background: var(--accent-soft); }
 .link-btn { border: 0; background: none; color: var(--accent); font-weight: 600; cursor: pointer; padding: 0; }
 
 /* My Stocks */
