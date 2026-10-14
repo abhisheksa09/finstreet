@@ -23,8 +23,9 @@
     jumpBefore: null, // unix seconds: show feed from this point back (Jump to date)
     followed: new Set(store.get("watchlist", [])), // key kept from v1 so existing picks survive
     meta: null,
-    feed: { stories: [], nextBefore: null, loading: false },
-    mine: { stories: [], nextBefore: null, loading: false },
+    // `since`: newest first_seen_at shown; polled against /api/new. Null = don't poll (e.g. a past date).
+    feed: { stories: [], nextBefore: null, loading: false, since: null },
+    mine: { stories: [], nextBefore: null, loading: false, since: null },
     picking: false,
   };
 
@@ -166,6 +167,10 @@
       const data = await api(`/api/feed?${params}`);
       list.stories = append ? list.stories.concat(data.stories) : data.stories;
       list.nextBefore = data.next_before;
+      if (!append) {
+        list.since = params.has("before") ? null : data.stories[0]?.first_seen_at ?? null;
+        hideNewPill();
+      }
       statusEl.textContent = "";
     } catch (e) {
       statusEl.textContent = navigator.onLine
@@ -188,10 +193,15 @@
     }
   }
 
-  async function loadFeed({ append = false } = {}) {
-    if (!append) loadCounts();
+  function feedParams() {
     const params = new URLSearchParams({ region: state.region });
     if (state.sector) params.set("sector", state.sector);
+    return params;
+  }
+
+  async function loadFeed({ append = false } = {}) {
+    if (!append) loadCounts();
+    const params = feedParams();
     if (!append && state.jumpBefore) params.set("before", state.jumpBefore);
     await loadInto(state.feed, params, { append, statusEl: $("#feedStatus") });
     renderFeed();
@@ -242,10 +252,11 @@
       renderMyStocks();
       return;
     }
-    const params = new URLSearchParams({ companies: [...state.followed].join(",") });
-    await loadInto(state.mine, params, { append, statusEl: $("#myStatus") });
+    await loadInto(state.mine, myParams(), { append, statusEl: $("#myStatus") });
     renderMyStocks();
   }
+
+  const myParams = () => new URLSearchParams({ companies: [...state.followed].join(",") });
 
   function renderMyStocks() {
     const none = !state.followed.size;
@@ -353,6 +364,7 @@
     if (view === "watchlist") view = "mystocks"; // old links / installed shortcuts
     if (!["feed", "mystocks", "about", "admin"].includes(view)) view = "feed";
     currentView = view;
+    hideNewPill();
     document.querySelectorAll(".view").forEach(v => (v.hidden = v.id !== `view-${view}`));
     document.querySelectorAll(".bottomnav a").forEach(a =>
       a.setAttribute("aria-current", a.dataset.view === view ? "page" : "false"));
@@ -366,6 +378,41 @@
     skipCacheUntil = Date.now() + 5000;
     if (currentView === "mystocks") loadMyStocks();
     else loadFeed();
+  }
+
+  // ── New headlines: while the app is open, ask the server every few minutes whether anything
+  // newer than the top story has arrived, and offer a pill to load it. ──
+  const NEW_POLL_MS = 2 * 60 * 1000;
+
+  function hideNewPill() {
+    $("#newPill").hidden = true;
+  }
+
+  async function checkForNew() {
+    if (document.hidden) return;
+    const view = currentView;
+    const list = view === "feed" ? state.feed : view === "mystocks" && !state.picking ? state.mine : null;
+    if (!list?.since || list.loading) return;
+    const params = view === "feed" ? feedParams() : myParams();
+    params.set("since", list.since);
+    try {
+      const { count } = await api(`/api/new?${params}`);
+      if (view !== currentView || !count) return;
+      const pill = $("#newPill");
+      pill.textContent = `↑ ${count} new headline${count === 1 ? "" : "s"}`;
+      pill.hidden = false;
+    } catch { /* offline or server hiccup: try again next time */ }
+  }
+
+  function setupNewPoll() {
+    $("#newPill").addEventListener("click", () => {
+      hideNewPill();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      refreshCurrent();
+    });
+    setInterval(checkForNew, NEW_POLL_MS);
+    // Coming back to the app (tab switch, phone unlock) checks straight away.
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) checkForNew(); });
   }
 
   // ── Admin: sign in at #/admin (not linked anywhere) to run the collector on demand.
@@ -493,6 +540,7 @@
   setupAdmin();
   setupPullToRefresh();
   setupDateJump();
+  setupNewPoll();
 
   (async () => {
     try { state.meta = await api("/api/meta"); } catch { state.meta = { sectors: [], companies: [] }; }

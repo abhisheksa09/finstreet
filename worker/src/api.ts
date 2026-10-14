@@ -33,6 +33,7 @@ export async function handleApi(req: Request, env: Env): Promise<Response> {
   try {
     switch (url.pathname) {
       case "/api/feed":    return await feed(url, env);
+      case "/api/new":     return await newCount(url, env);
       case "/api/counts":  return await counts(url, env);
       case "/api/sources": return await sources(env);
       case "/api/meta":    return await meta(env);
@@ -44,11 +45,17 @@ export async function handleApi(req: Request, env: Env): Promise<Response> {
   }
 }
 
+interface Filters {
+  region: string | null;
+  sector: string | null;
+  companies: string[] | null;
+}
+
 /**
- * Stories newest first. Either `region` (india|global) or `companies` (comma-separated NSE
- * symbols, both regions) is required; `sector`, `before` and `limit` are optional.
+ * Shared by /api/feed and /api/new. Either `region` (india|global) or `companies`
+ * (comma-separated NSE symbols, both regions) is required; `sector` is optional.
  */
-async function feed(url: URL, env: Env): Promise<Response> {
+function parseFilters(url: URL, env: Env): Filters | Response {
   const region = url.searchParams.get("region");
   if (region && !REGIONS.has(region)) return json({ error: "region must be 'india' or 'global'" }, 400, env);
 
@@ -64,18 +71,31 @@ async function feed(url: URL, env: Env): Promise<Response> {
   const sector = url.searchParams.get("sector");
   if (sector && !SECTORS.includes(sector)) return json({ error: "unknown sector" }, 400, env);
 
+  return { region, sector, companies };
+}
+
+// WHERE clause for Filters: ?1 region, ?2 sector, ?3 companies (JSON array).
+const FILTER_SQL = `(?1 IS NULL OR region = ?1)
+  AND (?2 IS NULL OR EXISTS (SELECT 1 FROM json_each(stories.sectors) WHERE value = ?2))
+  AND (?3 IS NULL OR EXISTS (SELECT 1 FROM json_each(stories.companies)
+                             WHERE value IN (SELECT value FROM json_each(?3))))`;
+
+const filterArgs = (f: Filters) => [f.region, f.sector, f.companies ? JSON.stringify(f.companies) : null];
+
+/** Stories newest first, filtered as in parseFilters; `before` and `limit` are optional. */
+async function feed(url: URL, env: Env): Promise<Response> {
+  const filters = parseFilters(url, env);
+  if (filters instanceof Response) return filters;
+
   const before = Number(url.searchParams.get("before") ?? Number.MAX_SAFE_INTEGER);
   const limit = Math.min(Math.max(Number(url.searchParams.get("limit") ?? DEFAULT_LIMIT) || DEFAULT_LIMIT, 1), MAX_LIMIT);
 
   const stories = (await env.DB
     .prepare(`SELECT id, title, region, sectors, companies, first_seen_at FROM stories
-              WHERE (?1 IS NULL OR region = ?1) AND first_seen_at < ?2
-                AND (?3 IS NULL OR EXISTS (SELECT 1 FROM json_each(stories.sectors) WHERE value = ?3))
-                AND (?5 IS NULL OR EXISTS (SELECT 1 FROM json_each(stories.companies)
-                                           WHERE value IN (SELECT value FROM json_each(?5))))
+              WHERE ${FILTER_SQL} AND first_seen_at < ?4
               ORDER BY first_seen_at DESC, id
-              LIMIT ?4`)
-    .bind(region, before, sector, limit, companies ? JSON.stringify(companies) : null)
+              LIMIT ?5`)
+    .bind(...filterArgs(filters), before, limit)
     .all<StoryRow>()).results;
 
   const links = stories.length
@@ -112,6 +132,23 @@ async function feed(url: URL, env: Env): Promise<Response> {
     // Ties on first_seen_at at a page boundary can be skipped; fine for a news feed.
     next_before: stories.length === limit ? stories[stories.length - 1].first_seen_at : null,
   }, 200, env);
+}
+
+/**
+ * How many stories match the filters and are newer than `since` (unix seconds) — the app polls
+ * this to offer "N new headlines" without reloading the whole feed.
+ */
+async function newCount(url: URL, env: Env): Promise<Response> {
+  const filters = parseFilters(url, env);
+  if (filters instanceof Response) return filters;
+  const since = Number(url.searchParams.get("since"));
+  if (!Number.isFinite(since) || since <= 0) return json({ error: "since must be a unix timestamp" }, 400, env);
+
+  const row = await env.DB
+    .prepare(`SELECT COUNT(*) AS n FROM stories WHERE ${FILTER_SQL} AND first_seen_at > ?4`)
+    .bind(...filterArgs(filters), since)
+    .first<{ n: number }>();
+  return json({ count: row?.n ?? 0 }, 200, env);
 }
 
 /** Stories per region in the last 24 h, optionally for one sector — powers the tab badges. */

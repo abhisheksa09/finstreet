@@ -76,6 +76,7 @@ Note: the free Workers plan allows 5 cron triggers per account.
 | --- | --- |
 | `GET /api/feed?region=india\|global[&sector=…][&before=…][&limit=…]` | Stories newest first, each with all outlet links |
 | `GET /api/feed?companies=INFY,TCS,…` | Stories naming any of these NSE symbols (both regions) — powers My Stocks |
+| `GET /api/new?since=<unix>&(region=…\|companies=…)[&sector=…]` | Count of matching stories newer than `since` — the app polls this to show “N new headlines” |
 | `GET /api/counts[?sector=…]` | Headline count per region (tab badges) |
 | `GET /api/sources` | Enabled sources (About screen) |
 | `GET /api/meta` | Sector names, watchlist companies, last collector run |
