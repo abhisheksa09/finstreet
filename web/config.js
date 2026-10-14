@@ -9,5 +9,6 @@ window.APP_CONFIG = {
   apiBase: location.port === "5173" ? "http://127.0.0.1:8788"
          : host.endsWith(".workers.dev") ? ""
          : WORKER_API,
-  contactEmail: "you@example.com",
+  contactEmail: "abhisheksa.09@gmail.com",
+  contactWhatsApp: "31622223698", // international format, digits only (for wa.me links)
 };

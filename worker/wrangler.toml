@@ -19,7 +19,7 @@ directory = "../web"
 
 [vars]
 # Sent in the User-Agent so publishers can reach you (SPEC §9).
-CONTACT_EMAIL = "you@example.com"
+CONTACT_EMAIL = "abhisheksa.09@gmail.com"
 # Origin of the PWA allowed to call the API. "*" is fine for local dev.
 ALLOWED_ORIGIN = "*"
 

@@ -326,10 +326,13 @@
 
   // ── About ──────────────────────────────────────────────────────────────────
   async function renderAbout() {
-    const contact = window.APP_CONFIG.contactEmail;
-    $("#contactLink").href = `mailto:${contact}?subject=${encodeURIComponent("FinStreet feedback")}`;
-    $("#lastRun").textContent = state.meta?.last_run_at
-      ? `Headlines last collected ${timeAgo(state.meta.last_run_at)}.` : "";
+    const { contactEmail, contactWhatsApp } = window.APP_CONFIG;
+    $("#contactEmail").href = `mailto:${contactEmail}?subject=${encodeURIComponent("FinStreet feedback")}`;
+    $("#contactWhatsApp").href = `https://wa.me/${contactWhatsApp}?text=${encodeURIComponent("Hi! Feedback on FinStreet: ")}`;
+    const showLastRun = at => ($("#lastRun").textContent = at ? `Headlines last updated ${timeAgo(at)}.` : "");
+    showLastRun(state.meta?.last_run_at);
+    // Re-read it: the copy loaded at startup goes stale while the app stays open.
+    api("/api/meta").then(meta => { state.meta = meta; showLastRun(meta.last_run_at); }).catch(() => {});
     try {
       const sources = await api("/api/sources");
       $("#sourceList").replaceChildren(...sources.map(s => {
