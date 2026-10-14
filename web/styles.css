@@ -190,3 +190,12 @@ a { color: var(--accent); }
 }
 .bottomnav a { flex: 1; text-align: center; padding: 14px 0; color: var(--muted); text-decoration: none; font-weight: 600; }
 .bottomnav a[aria-current="page"] { color: var(--accent); }
+
+/* Admin */
+.admin-card { display: grid; gap: 10px; max-width: 360px; margin-top: 8px; }
+.admin-card input {
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  border-radius: 8px; padding: 8px 10px; font: inherit;
+}
+.admin-card .link-btn { justify-self: start; }
+.admin-error { color: #dc2626; margin: 0; }

@@ -53,8 +53,10 @@
     return `${Math.floor(s / 86400)}d ago`;
   }
 
+  // API responses may be browser-cached for 60s; an explicit refresh skips that for a few seconds.
+  let skipCacheUntil = 0;
   async function api(path) {
-    const res = await fetch(API + path);
+    const res = await fetch(API + path, Date.now() < skipCacheUntil ? { cache: "no-cache" } : undefined);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   }
@@ -346,7 +348,7 @@
   function route() {
     let view = location.hash.replace("#/", "") || "feed";
     if (view === "watchlist") view = "mystocks"; // old links / installed shortcuts
-    if (!["feed", "mystocks", "about"].includes(view)) view = "feed";
+    if (!["feed", "mystocks", "about", "admin"].includes(view)) view = "feed";
     currentView = view;
     document.querySelectorAll(".view").forEach(v => (v.hidden = v.id !== `view-${view}`));
     document.querySelectorAll(".bottomnav a").forEach(a =>
@@ -354,11 +356,90 @@
     if (view === "feed") renderFeed();
     if (view === "mystocks") { state.picking = false; renderMyStocks(); loadMyStocks(); }
     if (view === "about") renderAbout();
+    if (view === "admin") renderAdmin();
   }
 
   function refreshCurrent() {
+    skipCacheUntil = Date.now() + 5000;
     if (currentView === "mystocks") loadMyStocks();
     else loadFeed();
+  }
+
+  // ── Admin: sign in at #/admin (not linked anywhere) to run the collector on demand.
+  // The password is checked by the server and kept on this device only. ──
+  const adminToken = () => store.get("adminToken", null);
+
+  function adminPost(path, token = adminToken()) {
+    return fetch(API + path, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+  }
+
+  function signOutAdmin() {
+    store.set("adminToken", null);
+    renderAdmin();
+  }
+
+  function renderAdmin() {
+    const signedIn = !!adminToken();
+    $("#collectBtn").hidden = !signedIn;
+    $("#adminSignIn").hidden = signedIn;
+    $("#adminPanel").hidden = !signedIn;
+  }
+
+  // Runs the collector; returns a message for the caller to show.
+  async function collectNow() {
+    try {
+      const res = await adminPost("/api/admin/collect");
+      const body = await res.json().catch(() => ({}));
+      if (res.status === 401) { signOutAdmin(); return "Password no longer valid. Signed out."; }
+      if (!res.ok) return body.error || `Collect failed (HTTP ${res.status})`;
+      refreshCurrent();
+      return `Done: ${body.newStories} new headline${body.newStories === 1 ? "" : "s"}.`;
+    } catch {
+      return "Couldn't reach the server.";
+    }
+  }
+
+  function setupAdmin() {
+    $("#adminSignIn").addEventListener("submit", async e => {
+      e.preventDefault();
+      const input = $("#adminPassword");
+      const error = $("#adminError");
+      error.hidden = true;
+      try {
+        const res = await adminPost("/api/admin/check", input.value);
+        if (res.ok) {
+          store.set("adminToken", input.value);
+          input.value = "";
+          renderAdmin();
+          return;
+        }
+        error.textContent = res.status === 401 ? "Wrong password." : "Admin is not set up on the server.";
+      } catch {
+        error.textContent = "Couldn't reach the server.";
+      }
+      error.hidden = false;
+    });
+    $("#adminSignOut").addEventListener("click", signOutAdmin);
+
+    $("#adminCollect").addEventListener("click", async () => {
+      const btn = $("#adminCollect");
+      btn.disabled = true;
+      $("#adminResult").textContent = "Collecting…";
+      $("#adminResult").textContent = await collectNow();
+      btn.disabled = false;
+    });
+
+    // Quick-access button in the header for a signed-in admin.
+    $("#collectBtn").addEventListener("click", async () => {
+      const btn = $("#collectBtn");
+      btn.disabled = true;
+      btn.textContent = "Collecting…";
+      const msg = await collectNow();
+      btn.disabled = false;
+      btn.textContent = "Collect now";
+      if (!msg.startsWith("Done")) alert(msg);
+    });
+    renderAdmin();
   }
 
   // ── Pull to refresh (simple: pull down at the top of the page) ─────────────
@@ -406,6 +487,7 @@
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => applyTheme(theme));
 
   window.addEventListener("hashchange", route);
+  setupAdmin();
   setupPullToRefresh();
   setupDateJump();
 

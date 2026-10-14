@@ -28,6 +28,7 @@
       </span>
     </a>
     <div class="top-actions">
+      <button id="collectBtn" class="theme-btn" hidden title="Admin: fetch all feeds now">Collect now</button>
       <button id="themeBtn" class="theme-btn" aria-label="Theme"></button>
       <button id="refreshBtn" class="icon-btn" aria-label="Refresh">&#8635;</button>
     </div>
@@ -99,6 +100,24 @@
     <h3>Contact</h3>
     <p><a id="contactLink" href="#">Send feedback</a></p>
     <p id="lastRun" class="muted"></p>
+  </main>
+
+  <!-- Admin (not linked anywhere; open #/admin) -->
+  <main id="view-admin" class="view" hidden>
+    <h2>Admin</h2>
+    <form id="adminSignIn" class="admin-card" hidden>
+      <p class="muted">Sign in to fetch the latest headlines on demand instead of waiting for the 15-minute schedule.</p>
+      <label for="adminPassword">Admin password</label>
+      <input id="adminPassword" type="password" autocomplete="current-password" required>
+      <p id="adminError" class="admin-error" hidden></p>
+      <button class="primary-btn" type="submit">Sign in</button>
+    </form>
+    <section id="adminPanel" class="admin-card" hidden>
+      <p>You're signed in as admin on this device.</p>
+      <button id="adminCollect" class="primary-btn">Collect now</button>
+      <p id="adminResult" class="muted"></p>
+      <button id="adminSignOut" class="link-btn">Sign out</button>
+    </section>
   </main>
 
   <nav class="bottomnav">
