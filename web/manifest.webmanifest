@@ -1,7 +1,7 @@
 {
   "name": "FinStreet",
   "short_name": "FinStreet",
-  "description": "Dalal Street to Wall Street, in one feed. Indian and global market headlines, de-duplicated and sector-tagged.",
+  "description": "Indian and global market headlines in one feed.",
   "start_url": "./#/feed",
   "scope": "./",
   "display": "standalone",
