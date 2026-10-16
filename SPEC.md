@@ -159,7 +159,7 @@ Known feed issues (verified 2026-10-13):
 - **Moneycontrol** `rss/marketreports.xml` returns an HTML page, not RSS — excluded.
 - **Yahoo Finance** `news/rssindex` returns 404 — use the per-symbol headline feed above.
   Its items are often syndicated from other outlets (e.g. Investing.com).
-- **Business Standard** ships unescaped `&` — sanitise before parsing.
+- **Business Standard** ships unescaped `&` — the extractor leaves bare `&` as-is.
 - **FT** — check terms before inclusion (§9); disable via `sources.enabled` if needed.
 
 ### 7.2 Fetch, parse, dedupe
@@ -167,9 +167,9 @@ Known feed issues (verified 2026-10-13):
 1. Fetch every enabled feed in parallel. Headers:
    `User-Agent: FinStreet/1.0 (+<contact email>)`,
    `Accept: application/rss+xml, application/xml, text/xml, */*`. Timeout 15 s.
-2. Sanitise before parsing: decode as UTF-8 with replacement; replace bare `&` not
-   starting an entity (`&(?!#\d+;|#x[0-9a-fA-F]+;|[A-Za-z][A-Za-z0-9]*;)`) with `&amp;`.
-   Workers have no `DOMParser` → use `fast-xml-parser`. Handle RSS 2.0 `<item>` and Atom `<entry>`.
+2. Decode as UTF-8 with replacement, then extract with a small regex-based reader (not a full
+   XML parser: that cost ~50 ms CPU per run against the free plan's 10 ms). Handle RSS 2.0 /
+   RDF `<item>` and Atom `<entry>`; CDATA is literal, entities are decoded, bare `&` is kept.
 3. Per item keep only: `title` (HTML-unescaped, whitespace-collapsed), `link`, `pubDate`/`updated`.
    **Discard `description`.** Drop items without title or link, or older than 90 days.
 4. On success set `last_ok_at = now`, `fail_count = 0`; on failure `fail_count += 1`
@@ -260,7 +260,7 @@ market-news-aggregator/
 │   ├── seed.sql               # §7.1 sources
 │   └── src/
 │       ├── index.ts           # scheduled() + fetch() entry points
-│       ├── collector.ts       # fetch, sanitise, parse (§7.2)
+│       ├── collector.ts       # fetch, parse, dedupe, store (§7.2)
 │       ├── dedupe.ts          # title normalisation + Jaccard (§7.2)
 │       ├── tagging.ts         # sectors (§7.3) + companies (§7.4)
 │       ├── api.ts             # §8 routes

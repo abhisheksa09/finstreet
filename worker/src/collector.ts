@@ -2,7 +2,7 @@
 // tag, store, and prune anything older than the retention window (SPEC §7).
 import type { Env } from "./index";
 import { fetchFeed, type FeedItem } from "./feeds";
-import { findSameStory, storyId, titleTokens, type Candidate } from "./dedupe";
+import { StoryIndex, storyId, titleTokens } from "./dedupe";
 import { TAGGING_VERSION, tagCompanies, tagSectors } from "./tagging";
 
 const RETENTION_S = 90 * 86400;    // keep 90 days of headlines (about 0.5 KB each)
@@ -67,17 +67,6 @@ export async function runCollector(env: Env): Promise<RunSummary> {
         .all<{ url: string }>()).results.map(r => r.url)
     : []);
 
-  // Recent stories to match new headlines against.
-  const recent = (await env.DB
-    .prepare("SELECT id, title, region FROM stories WHERE first_seen_at >= ?")
-    .bind(now - MATCH_WINDOW_S)
-    .all<{ id: string; title: string; region: string }>()).results;
-  const candidates = new Map<string, Candidate[]>();
-  for (const r of recent) {
-    if (!candidates.has(r.region)) candidates.set(r.region, []);
-    candidates.get(r.region)!.push({ id: r.id, tokens: titleTokens(r.title) });
-  }
-
   const stmts: D1PreparedStatement[] = [];
   const summary: RunSummary = { ranAt: now, sources: [], newStories: 0, newLinks: 0 };
   const fresh: { source: SourceRow; item: FeedItem }[] = [];
@@ -104,21 +93,35 @@ export async function runCollector(env: Env): Promise<RunSummary> {
     }
   });
 
+  // Recent stories to match new headlines against — only needed when something is new,
+  // which most runs it isn't (CPU is tight on the Workers free plan).
+  const candidates = new Map<string, StoryIndex>();
+  const indexFor = (region: string) => {
+    if (!candidates.has(region)) candidates.set(region, new StoryIndex());
+    return candidates.get(region)!;
+  };
+  if (fresh.length) {
+    const recent = (await env.DB
+      .prepare("SELECT id, title, region FROM stories WHERE first_seen_at >= ?")
+      .bind(now - MATCH_WINDOW_S)
+      .all<{ id: string; title: string; region: string }>()).results;
+    for (const r of recent) indexFor(r.region).add({ id: r.id, tokens: titleTokens(r.title) });
+  }
+
   // Oldest first, so the outlet that published first owns the story and its title.
   fresh.sort((a, b) => (a.item.publishedAt ?? now) - (b.item.publishedAt ?? now));
   const created = new Set<string>();
 
   for (const { source, item } of fresh) {
     const tokens = titleTokens(item.title);
-    if (!candidates.has(source.region)) candidates.set(source.region, []);
-    const regionCandidates = candidates.get(source.region)!;
+    const regionIndex = indexFor(source.region);
 
-    let id = findSameStory(tokens, regionCandidates);
+    let id = regionIndex.find(tokens);
     if (!id) {
       id = await storyId(item.title);
       if (!created.has(id)) {
         created.add(id);
-        regionCandidates.push({ id, tokens });
+        regionIndex.add({ id, tokens });
         stmts.push(env.DB
           .prepare(`INSERT OR IGNORE INTO stories (id, title, region, sectors, companies, first_seen_at)
                     VALUES (?, ?, ?, ?, ?, ?)`)

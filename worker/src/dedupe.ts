@@ -51,6 +51,32 @@ export function findSameStory(
   return best;
 }
 
+/**
+ * Candidates indexed by token, so a headline is only scored against stories sharing a word
+ * with it (a Jaccard score above 0 needs one). Same result as findSameStory over all of them.
+ */
+export class StoryIndex {
+  private candidates: Candidate[] = [];
+  private byToken = new Map<string, number[]>();
+
+  add(c: Candidate): void {
+    const i = this.candidates.push(c) - 1;
+    for (const t of c.tokens) {
+      const list = this.byToken.get(t);
+      if (list) list.push(i);
+      else this.byToken.set(t, [i]);
+    }
+  }
+
+  find(tokens: Set<string>, threshold = SAME_STORY_THRESHOLD): string | null {
+    const hits = new Set<number>();
+    for (const t of tokens) for (const i of this.byToken.get(t) ?? []) hits.add(i);
+    // Insertion order, so ties resolve exactly as findSameStory does.
+    const subset = [...hits].sort((a, b) => a - b).map(i => this.candidates[i]);
+    return findSameStory(tokens, subset, threshold);
+  }
+}
+
 /** Stable story id: first 16 hex chars of SHA-256 over the sorted title tokens. */
 export async function storyId(title: string): Promise<string> {
   const key = [...titleTokens(title)].sort().join(" ") || title.toLowerCase();
